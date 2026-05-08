@@ -5,58 +5,66 @@ This project processes and analyzes voting data from the Polish Sejm using Pytho
 ## Overview
 
 The goal is to build a simple data pipeline that:
-- fetches raw voting data from the Sejm API
-- stores it as JSON files
-- transforms it into a structured format using PySpark
+- fetches raw MP and voting data from the Sejm API
+- stores raw JSON files in `data/raw/`
+- transforms raw JSON into structured Parquet datasets in `data/silver/`
 - enables further analysis of voting behavior
 
 ## Data Pipeline
 
-API → raw JSON → Spark transformation → structured dataset
+API → raw JSON → Spark transformation → structured dataset (Parquet)
 
-## Data
+## Data Layout
 
-Each JSON file represents a single voting session and contains a list of MPs with their votes.
+- `data/raw/mps/` — raw MP data per term, e.g. `term10_mps.json`
+- `data/raw/votings/` — raw voting session JSON files, organized by term and proceeding
+- `data/silver/mps/` — cleaned MP Parquet dataset partitioned by `term`
+- `data/silver/votings/` — cleaned votes Parquet dataset partitioned by `term`
 
-Example fields:
-- MP (ID within term)
-- firstName, lastName
-- club
-- vote (YES / NO / ABSTAIN)
+## Data Contents
 
-Additional metadata (extracted from file name):
-- term
-- proceeding
-- voting number
+MP files include fields such as:
+- `id`, `firstName`, `lastName`, `club`, `birthDate`, `districtName`, `educationLevel`, `profession`, `term`
+
+Voting files include fields such as:
+- `MP`, `vote`, plus metadata extracted from the filename: `term`, `proceeding`, `vote_id`
 
 ## Processing
 
-Main steps:
-- read JSON files using Spark
-- extract metadata from file paths
-- flatten nested structures
-- build a tabular dataset of votes
+The current transformation script is `src/file_proccesor.py`.
+It:
+- reads raw JSON recursively from `data/raw/mps/` and `data/raw/votings/`
+- extracts metadata from input file paths
+- renames and casts selected fields
+- writes cleaned data to `data/silver/mps` and `data/silver/votings` in Parquet format
 
-Resulting structure (simplified):
+## Requirements
 
-term | proceeding | voting_id | MP | vote | club
+- Python 3
+- `pyspark`
+- `requests`
 
-## Tech Stack
+## Run Instructions
 
-- Python
-- PySpark
-- JSON API (Sejm)
+From the repository root:
 
-## Status
+1. Fetch raw data:
+   ```bash
+   python3 src/api_request.py
+   ```
 
-Work in progress.  
+2. Transform raw JSON into Parquet:
+   ```bash
+   python3 src/file_proccesor.py
+   ```
+
+3. Inspect the generated Parquet datasets in `data/silver/`.
+
+## Current Status
+
+Work in progress.
+
 Next steps include:
-- improving data modeling (MP identity across terms)
-- adding analytical queries (e.g. voting similarity)
-- storing processed data in Parquet format
-
-## How to run
-
-1. Fetch data using the API script
-2. Run Spark transformation script on raw data directory
-3. Explore resulting dataset or extend transformations
+- improving MP identity modeling across terms
+- adding analytical queries (e.g. voting similarity, club cohesion)
+- adding more structured output and reporting
