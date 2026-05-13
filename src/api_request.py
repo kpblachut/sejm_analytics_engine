@@ -58,7 +58,7 @@ if __name__ == "__main__":
     for term in terms:
         log.info(f"--- Term {term} ---")
 
-        mps_path = f"./data/raw/mps/{term}/term{term}_mps.json"
+        mps_path = f"../data/raw/mps/{term}/term{term}_mps.json"
         if not already_fetched(mps_path):
             mps = fetch_all_mps_per_term(term)
             save_json(mps, mps_path)
@@ -72,7 +72,7 @@ if __name__ == "__main__":
             skipped = 0
 
             for vote_num in vote_nums:
-                path = f"./data/raw/votings/{term}/proceeding/term{term}_proceeding{proceeding}_vote{vote_num}.json"
+                path = f"../data/raw/votings/{term}/proceeding/term{term}_proceeding{proceeding}_vote{vote_num}.json"
 
                 if already_fetched(path):
                     skipped += 1
