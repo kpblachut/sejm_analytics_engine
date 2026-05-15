@@ -67,20 +67,20 @@ df_voting_meta = df_votings_raw.select(
     col("term").cast("int").alias("term"),
     col("sitting").cast("int").alias("sitting"),
     col("votingNumber").cast("int").alias("vote_id"),
-    col("sittingDay"),
+    col("sittingDay").alias("sitting_day"),
     col("date"),
     col("title"),
     col("topic"),
     col("description"),
     col("kind"),
-    col("majorityType"),
-    col("majorityVotes"),
+    col("majorityType").alias("majority_type"),
+    col("majorityVotes").alias("majority_vote"),
     col("yes"),
     col("no"),
     col("abstain"),
-    col("notParticipating"),
+    col("notParticipating").alias("not_participating"),
     col("present"),
-    col("totalVoted")
+    col("totalVoted").alias("total_voted")
 )
 
 
@@ -148,26 +148,5 @@ df_votes_on_list.write \
     .partitionBy("term") \
     .parquet("../data/silver/votes_on_list")
 
-
-
-
-# 1. Czy person_id stabilny między kadencjami?
-df_mps_clean.groupBy("person_id").agg(
-    count_distinct("term").alias("n_terms"),
-    count_distinct(concat_ws("|", "first_name", "last_name")).alias("n_names")
-).filter(col("n_names") > 1).show()
-# Jeśli puste → świetnie. Jeśli coś jest → znaczy że dwie osoby zhashowały się tak samo,
-# albo (częściej) ta sama osoba ma inaczej zapisane nazwisko między kadencjami.
-
-# 2. Jakie wartości faktycznie ma vote_raw?
-df_votes.select("vote_raw").distinct().show()
-df_votes_on_list.select("vote_raw").distinct().show()
-# Sprawdź czy nic nie wpadło w "OTHER" niespodziewanie.
-
-# 3. Czy club_at_vote się zmienia w trakcie kadencji?
-df_votes.select("term", "mp_id", "club_at_vote").distinct() \
-    .groupBy("term", "mp_id").count() \
-    .filter(col("count") > 1).show()
-# Jeśli coś jest > 1 → masz historię klubową w danych. Bingo.
 
 spark.stop()
